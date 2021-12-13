@@ -5,12 +5,10 @@ import DailyScheduler from '../../service/dailyScheduler';
 const next: Middleware<SlackActionMiddlewareArgs<BlockAction>> = async ({
   body,
   ack,
-  respond,
-  client,
   payload,
 }) => {
   await ack();
-  await respond({ delete_original: true });
+  // await respond({ delete_original: true });
 
   if (!body.channel) {
     return;
@@ -27,15 +25,10 @@ const next: Middleware<SlackActionMiddlewareArgs<BlockAction>> = async ({
   }
 
   if (
-    !instance.hasNextPrivilege({
-      userId: body.user.id,
+    !instance.canNext({
       blockId: payload.block_id,
     })
   ) {
-    await client.chat.postMessage({
-      channel: body.user.id,
-      text: ':stuck_out_tongue_winking_eye:',
-    });
     return;
   }
 

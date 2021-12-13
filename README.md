@@ -25,10 +25,6 @@ features:
       url: <url>/slack/events
       description: Remove daily roulette from current channel
       should_escape: false
-    - command: /droulette-kick
-      url: <url>/slack/events
-      description: Start vote kick to eject current speaking user
-      should_escape: false
     - command: /droulette-start
       url: <url>/slack/events
       description: Force daily meeting startup

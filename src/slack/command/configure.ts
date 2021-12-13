@@ -150,6 +150,7 @@ const configure: Middleware<SlackCommandMiddlewareArgs> = async ({
         {
           type: 'input',
           block_id: 'users',
+          optional: true,
           label: {
             type: 'plain_text',
             emoji: true,
