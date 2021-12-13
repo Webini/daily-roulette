@@ -21,6 +21,11 @@ features:
       url: <url>/slack/events
       description: Install or / configure existing daily roulette bot
       should_escape: false
+    - command: /droulette-estimate
+      usage_hint: Issue number, or description
+      url: <url>/slack/events
+      should_escape: true
+      description: Estimate a new issue
     - command: /droulette-remove
       url: <url>/slack/events
       description: Remove daily roulette from current channel

@@ -94,7 +94,7 @@ class DailySchedulerClass {
     this.dailies.push(daily);
     const onStopped = () => {
       this.dailies = this.dailies.filter((d) => d.conf.id !== entity.id);
-      daily.off('stopped', onStopped);
+      daily.removeAllListeners();
     };
 
     daily.on('stopped', onStopped);

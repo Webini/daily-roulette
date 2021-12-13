@@ -5,9 +5,9 @@ import DailyConfiguration from '../entity/dailyConfiguration';
 import DailyConfigurationService from './dailyConfiguration';
 import createRandomString from '../utils/createRandomString';
 import createDebug from '../utils/createDebug';
-import createGiveTheFloorBlocks from '../slack/blocks/createGiveTheFloorBlocks';
+import createGiveTheFloorBlocks from '../slack/block/createGiveTheFloorBlocks';
 import parallelPromise from '../utils/parallelPromise';
-import createKickBlocks from '../slack/blocks/createKickBlocks';
+import createKickBlocks from '../slack/block/createKickBlocks';
 import shuffle from '../utils/shuffle';
 
 const debug = createDebug('daily-process');

@@ -19,7 +19,7 @@ export const createConfiguration = (
     entities: [Workspace, DailyConfiguration],
     migrations: [`${path.resolve(__dirname, './migration')}/**/*.ts`],
     synchronize: false,
-    logging: process.env.NODE_ENV !== 'production',
+    logging: process.env.DEBUG_QUERIES === 'true',
   };
 };
 

@@ -1,40 +1,47 @@
-const instances = [];
+import EstimationProcess from './estimationProcess';
+import DailyConfiguration from '../entity/dailyConfiguration';
+import createDebug from '../utils/createDebug';
+
+const debug = createDebug('estimations');
+
 const Estimations = {
-  getOne({
-    estimationId,
-    channelId,
-    enterpriseId,
-    teamId,
-  }: {
-    estimationId: string;
-    channelId: string;
-    enterpriseId?: string | null;
-    teamId?: string | null;
-  }) {},
+  instances: [] as EstimationProcess[],
+
+  get(id: string) {
+    return this.instances.find((inst) => inst.id === id);
+  },
 
   create({
     name,
     channelId,
-    enterpriseId,
-    teamId,
+    conf,
     adminId,
   }: {
     name: string;
     adminId: string;
     channelId: string;
+    conf: DailyConfiguration;
     enterpriseId?: string | null;
     teamId?: string | null;
-  }) {},
-
-  remove({
-    channelId,
-    enterpriseId,
-    teamId,
-    estimationId,
-  }: {
-    channelId: string;
-    enterpriseId?: string | null;
-    teamId?: string | null;
-    estimationId: string;
-  }) {},
+  }) {
+    const instance = new EstimationProcess({
+      adminId,
+      name,
+      channelId,
+      conf,
+    });
+    const onTerminated = () => {
+      this.instances = this.instances.filter(
+        (current) => current.id !== instance.id,
+      );
+      instance.removeAllListeners();
+      debug('Deleted estimation #%s', instance.id);
+    };
+    instance.on('terminated', onTerminated);
+    debug('Created new estimation #%s', instance.id);
+    this.instances.push(instance);
+    return instance;
+  },
 };
+
+export default Estimations;
