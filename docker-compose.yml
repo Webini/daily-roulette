@@ -1,0 +1,32 @@
+# docker-compose.yml
+version: '3.4'
+
+x-app-defaults: &app_defaults
+  image: ${APP_IMAGE}
+  environment:
+    SLACK_SIGNING_SECRET: ${SLACK_SIGNING_SECRET}
+    SLACK_CLIENT_ID: ${SLACK_CLIENT_ID}
+    SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET}
+    SLACK_STATE_SECRET: ${SLACK_STATE_SECRET}
+    SENTRY_DSN: ${SENTRY_DSN}
+    APP_ENVIRONMENT: ${APP_ENVIRONMENT}
+  volumes:
+    - ${STORAGE_PATH}/database:/data
+
+services:
+  app:
+    <<: *app_defaults
+    restart: always
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.${TRAEFIK_PREFIX}app.rule=Host(`${APP_DOMAIN}`)'
+      - 'traefik.http.routers.${TRAEFIK_PREFIX}app.entrypoints=https'
+      - 'traefik.http.routers.${TRAEFIK_PREFIX}app.tls.certresolver=letsencrypt'
+      - 'traefik.http.routerS.${TRAEFIK_PREFIX}app.middlewares=${TRAEFIK_APP_MIDDLEWARE}'
+      - 'traefik.http.routers.${TRAEFIK_PREFIX}app-redirect.rule=Host(`${APP_DOMAIN}`)'
+      - 'traefik.http.routers.${TRAEFIK_PREFIX}app-redirect.entrypoints=http'
+      - 'traefik.http.routers.${TRAEFIK_PREFIX}app-redirect.middlewares=https-redirect'
+
+  app_migration:
+    <<: *app_defaults
+    command: 'npm run db:migrate'

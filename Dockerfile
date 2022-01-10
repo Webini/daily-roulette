@@ -38,7 +38,6 @@ RUN mkdir /data && chown node:node /data
 USER node
 WORKDIR /home/node
 
-ARG SENTRY_DSN
 ARG APP_VERSION
 
 ENV SQLITE_PATH /data/database.sqlite

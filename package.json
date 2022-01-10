@@ -16,7 +16,7 @@
     "start:prod": "node ./src/index"
   },
   "lint-staged": {
-    "*.js": "npm run-script lint:eslint"
+    "*.ts": "npm run-script lint:eslint"
   },
   "pre-commit": [
     "lint:staged"

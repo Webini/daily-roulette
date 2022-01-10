@@ -1,0 +1,82 @@
+image: docker:stable
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - deploy
+
+.tools: &tools |
+  set -e
+
+  function enableSsh() {
+    which ssh-agent || ( apk update && apk add openssh-client )
+    mkdir -p ~/.ssh
+    echo -e "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    eval $(ssh-agent -s)
+  }
+
+  function build() {
+    docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    docker build \
+      --build-arg APP_VERSION=$RELEASE \
+      -t $CI_REGISTRY_IMAGE:$IMAGE_TAG .
+    docker tag $CI_REGISTRY_IMAGE:$IMAGE_TAG $CI_REGISTRY_IMAGE:$LATEST_IMAGE_TAG
+    docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
+    docker push $CI_REGISTRY_IMAGE:$LATEST_IMAGE_TAG
+  }
+
+before_script:
+  - export IMAGE_PREFIX=`[ ! -z $CI_MERGE_REQUEST_ID ] && echo "MR$CI_MERGE_REQUEST_ID" || echo $CI_COMMIT_REF_NAME`
+  - export IMAGE_TAG=$IMAGE_PREFIX`[ ! -z $CI_COMMIT_TAG ] && echo "" || echo "-$CI_COMMIT_SHORT_SHA"`
+  - export LATEST_IMAGE_TAG=`[ -z $CI_COMMIT_TAG ] && echo "$IMAGE_PREFIX-" || echo ''`latest
+  - export RELEASE=`[[ ! -z $CI_COMMIT_TAG ]] && echo "$CI_COMMIT_TAG" || echo "$CI_COMMIT_SHORT_SHA"`
+  - *tools
+
+.deploy:
+  stage: deploy
+  script:
+    - enableSsh
+    - apk update && (which rsync || apk add rsync)
+    - rsync -az -e "ssh -p $SSH_PORT" ./docker-compose.yml $DEPLOY_USER@$SSH_SERVER:/home/$DEPLOY_USER/${PROJECT_NAME}/deploy_${PROJECT_NAME} &&
+      ssh $DEPLOY_USER@$SSH_SERVER -p $SSH_PORT "
+      docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY &&
+      cd /home/$DEPLOY_USER/${PROJECT_NAME}/deploy_${PROJECT_NAME} &&
+      export APP_OLD_IMAGE=\$(grep APP_IMAGE .env | sed s/APP_IMAGE=//) &&
+      sed -i.bak s#APP_IMAGE=.*#APP_IMAGE=$CI_REGISTRY_IMAGE:$IMAGE_TAG# .env &&
+      docker-compose pull &&
+      docker-compose down -v &&
+      docker-compose up -d &&
+      ([ ! -z \$APP_OLD_IMAGE ] && docker rmi \$APP_OLD_IMAGE || echo Old image not found )"
+
+.build:
+  stage: build
+  script:
+    - build
+
+build_preprod:
+  extends: .build
+  only: ['release']
+  environment:
+    name: preprod
+
+build_prod:
+  extends: .build
+  only: ['tags']
+  environment:
+    name: prod
+
+deploy_preprod:
+  extends: .deploy
+  only: ['release']
+  environment:
+    name: preprod
+
+deploy_prod:
+  extends: .deploy
+  when: manual
+  only: ['tags']
+  environment:
+    name: prod
