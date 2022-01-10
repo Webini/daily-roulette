@@ -18,29 +18,29 @@ features:
     always_online: false
   slash_commands:
     - command: /droulette-configure
-      url: <url>/slack/events
+      url: <host>/slack/events
       description: Install or / configure existing daily roulette bot
       should_escape: false
     - command: /droulette-estimate
-      usage_hint: Issue number, or description
-      url: <url>/slack/events
-      should_escape: true
+      url: <host>/slack/events
       description: Estimate a new issue
+      usage_hint: <Issue number, or description>
+      should_escape: true
     - command: /droulette-remove
-      url: <url>/slack/events
+      url: <host>/slack/events
       description: Remove daily roulette from current channel
       should_escape: false
     - command: /droulette-start
-      url: <url>/slack/events
+      url: <host>/slack/events
       description: Force daily meeting startup
       should_escape: false
     - command: /droulette-stop
-      url: <url>/slack/events
+      url: <host>/slack/events
       description: Stop current daily meeting
       should_escape: false
 oauth_config:
   redirect_urls:
-    - <url>/slack/oauth_redirect
+    - <host>/slack/oauth_redirect
   scopes:
     bot:
       - commands
@@ -51,7 +51,7 @@ oauth_config:
       - users:read
 settings:
   event_subscriptions:
-    request_url: <url>/slack/events
+    request_url: <host>/slack/events
     user_events:
       - app_uninstalled
     bot_events:
@@ -59,7 +59,7 @@ settings:
       - channel_left
   interactivity:
     is_enabled: true
-    request_url: <url>/slack/events
+    request_url: <host>/slack/events
   org_deploy_enabled: false
   socket_mode_enabled: false
   token_rotation_enabled: false

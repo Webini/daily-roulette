@@ -8,7 +8,11 @@ describe('parallelPromise', () => {
   it('should not parallelize', async () => {
     const elements = [1, 2, 3, 4];
     const start = Date.now();
-    await parallelPromise(() => wait(waitDelay))(elements, 1);
+    await parallelPromise({
+      processor: () => wait(waitDelay),
+      data: elements,
+      parallel: 1,
+    });
     const end = Date.now();
 
     const diff = end - start;
@@ -19,7 +23,11 @@ describe('parallelPromise', () => {
   it('should parallelize', async () => {
     const elements = [1, 2, 3, 4];
     const start = Date.now();
-    await parallelPromise(() => wait(waitDelay))(elements, 2);
+    await parallelPromise({
+      processor: () => wait(waitDelay),
+      data: elements,
+      parallel: 2,
+    });
     const end = Date.now();
 
     const diff = end - start;

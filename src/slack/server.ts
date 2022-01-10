@@ -15,7 +15,13 @@ const createSlackServer = () => {
     clientId: process.env.SLACK_CLIENT_ID,
     clientSecret: process.env.SLACK_CLIENT_SECRET,
     stateSecret: process.env.SLACK_STATE_SECRET,
-    scopes: ['chat:write', 'commands', 'channels:read', 'channels:join', 'users:read'],
+    scopes: [
+      'chat:write',
+      'commands',
+      'channels:read',
+      'channels:join',
+      'users:read',
+    ],
     installationStore: {
       storeInstallation: async (installation) => {
         await WorkspaceService.install({

@@ -17,7 +17,7 @@ export const createConfiguration = (
     type: 'sqlite',
     database: databasePath,
     entities: [Workspace, DailyConfiguration],
-    migrations: [`${path.resolve(__dirname, './migration')}/**/*.ts`],
+    migrations: [`${path.resolve(__dirname, './migration')}/**/*.[tj]s`],
     synchronize: false,
     logging: process.env.DEBUG_QUERIES === 'true',
   };
