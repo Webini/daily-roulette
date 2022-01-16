@@ -22,6 +22,9 @@ const createSlackServer = () => {
       'channels:join',
       'users:read',
     ],
+    installerOptions: {
+      directInstall: true,
+    },
     installationStore: {
       storeInstallation: async (installation) => {
         await WorkspaceService.install({
