@@ -1,10 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  Column,
-  JoinTable,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
 import Workspace from './workspace';
 
 @Entity('DailyConfiguration')
@@ -65,7 +59,11 @@ class DailyConfiguration {
   @Column({ type: 'datetime', nullable: true })
   finishedAt!: Date | null;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({
+    type: 'datetime',
+    nullable: true,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   lastExecutedAt!: Date | null;
 
   @Column({ type: 'varchar', length: 250, nullable: false })

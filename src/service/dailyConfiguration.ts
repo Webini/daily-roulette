@@ -1,11 +1,11 @@
-import { getRepository, Raw } from 'typeorm';
+import { getRepository /* , Raw */ } from 'typeorm';
 import { utcToZonedTime, format, zonedTimeToUtc } from 'date-fns-tz';
 import DailyConfiguration from '../entity/dailyConfiguration';
 import createDebug from '../utils/createDebug';
 import WorkspaceService from './workspace';
 
 const debug = createDebug('daily-configuration-service');
-const ONE_DAY_IN_SEC = 24 * 60 * 60;
+// const ONE_DAY_IN_SEC = 24 * 60 * 60;
 
 type DailyDayKeys = Extract<
   keyof DailyConfiguration,
@@ -127,17 +127,23 @@ const DailyConfigurationService = {
     const repo = getRepository(DailyConfiguration);
 
     // This should be done in raw sql but sqlite lack of good timezone support
-    const allDailies = await repo.find({
-      lastExecutedAt: Raw(
-        (alias) =>
-          `${alias} IS NULL OR strftime('%s', datetime(:date)) - strftime('%s', ${alias}) > ${ONE_DAY_IN_SEC}`,
-        { date: from.toISOString() },
-      ),
-    });
+    // const allDailies = await repo.find({
+    //   lastExecutedAt: Raw(
+    //     (alias) =>
+    //       // /!\ this condition is buggy if daily is manually trigger
+    //       `${alias} IS NULL OR strftime('%s', datetime(:date)) - strftime('%s', ${alias}) > ${ONE_DAY_IN_SEC}`,
+    //     { date: from.toISOString() },
+    //   ),
+    // });
+    const allDailies = await repo.find();
     const upcomingDailies: DailyConfiguration[] = allDailies.filter((daily) => {
       const nextStart = this.getNextStart(daily, from);
       if (!nextStart) {
         debug('Ignore daily id %d with %o', daily.id, { from, nextStart });
+        return false;
+      }
+
+      if (daily.lastExecutedAt && nextStart < daily.lastExecutedAt) {
         return false;
       }
 

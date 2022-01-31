@@ -23,6 +23,14 @@ const estimate: Middleware<SlackCommandMiddlewareArgs> = async ({
     return;
   }
 
+  if (!payload.text || payload.text.trim().length <= 0) {
+    await client.chat.postMessage({
+      channel: body.user_id,
+      text: 'You must describe or set the the ticket id to estimate',
+    });
+    return;
+  }
+
   const estimation = Estimations.create({
     name: payload.text,
     channelId: payload.channel_id,

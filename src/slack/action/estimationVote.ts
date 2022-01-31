@@ -35,6 +35,7 @@ const estimationVote: Middleware<
   const blocks = await estimation.vote({
     userId: body.user.id,
     option: payload.value as VoteOption,
+    responseUrl: body.response_url,
   });
 
   if (blocks) {

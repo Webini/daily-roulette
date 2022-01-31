@@ -14,7 +14,7 @@ export type VoteOption =
   | '89'
   | '?';
 export const voteOptions: VoteOption[] = [
-  ':coffee:',
+  '?',
   '1',
   '2',
   '3',
@@ -25,7 +25,7 @@ export const voteOptions: VoteOption[] = [
   '34',
   '55',
   '89',
-  '?',
+  ':coffee:',
 ];
 
 const createEstimationVoteBlocks = ({

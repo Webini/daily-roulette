@@ -1,6 +1,5 @@
 import { Middleware, SlackViewMiddlewareArgs } from '@slack/bolt/dist/types';
 import { ViewSubmitAction } from '@slack/bolt/dist/types/view';
-import DailyConfigurationService from '../../service/dailyConfiguration';
 import DailyConfiguration from '../../service/dailyConfiguration';
 
 type Day =
@@ -39,7 +38,7 @@ type StateType = {
 
 const configure: Middleware<
   SlackViewMiddlewareArgs<ViewSubmitAction>
-> = async ({ ack, respond, payload, client, body, ...params }) => {
+> = async ({ ack, payload, client, body }) => {
   const values = payload.state.values as unknown as StateType;
   const channelId = values.channel['conversation-action'].selected_conversation;
   const enabledDays = values.enabledDays[

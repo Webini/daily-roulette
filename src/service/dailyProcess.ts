@@ -1,13 +1,12 @@
 import { WebClient } from '@slack/web-api';
 import EventEmitter from 'events';
-import { userInfo } from 'os';
 import DailyConfiguration from '../entity/dailyConfiguration';
 import DailyConfigurationService from './dailyConfiguration';
 import createRandomString from '../utils/createRandomString';
 import createDebug from '../utils/createDebug';
-import createGiveTheFloorBlocks from '../slack/block/createGiveTheFloorBlocks';
-import parallelPromise from '../utils/parallelPromise';
-import createKickBlocks from '../slack/block/createKickBlocks';
+import createGiveTheFloorBlocks, {
+  createGiveTheFloorText,
+} from '../slack/block/createGiveTheFloorBlocks';
 import shuffle from '../utils/shuffle';
 
 const debug = createDebug('daily-process');
@@ -123,6 +122,11 @@ class DailyProcess extends EventEmitter {
           talkingUserId: this.availableMembers[this.currentMemberOffset],
           hasNext: this.currentMemberOffset + 1 < this.availableMembers.length,
         }),
+        text: createGiveTheFloorText({
+          talkingUserId: this.availableMembers[this.currentMemberOffset],
+          hasNext: this.currentMemberOffset + 1 < this.availableMembers.length,
+          short: true,
+        }),
       });
     }
 
@@ -136,6 +140,12 @@ class DailyProcess extends EventEmitter {
         talkingUserId: memberId,
         hasNext,
         hasAction: true,
+      }),
+      text: createGiveTheFloorText({
+        talkingUserId: memberId,
+        hasNext,
+        hasAction: true,
+        short: true,
       }),
     });
     this.currentMessageTs = res.ts || null;

@@ -25,6 +25,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
     const port = Number(process.env.PORT) || 3000;
     await server.start(port);
     await DailyScheduler.start();
+    // eslint-disable-next-line no-console
     console.log(`Listening on ${port}`);
   } catch (e) {
     console.error(e);

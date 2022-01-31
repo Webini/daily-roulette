@@ -189,6 +189,7 @@ const configure: Middleware<SlackCommandMiddlewareArgs> = async ({
         {
           type: 'input',
           block_id: 'enabledDays',
+          optional: true,
           element: {
             type: 'checkboxes',
             initial_options: selectedDays.length > 0 ? selectedDays : undefined,

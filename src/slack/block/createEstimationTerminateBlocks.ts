@@ -1,5 +1,8 @@
 import type { Block, KnownBlock } from '@slack/types';
 
+export const createEstimationTerminateText = () =>
+  `To manually terminate the estimation, click on the button bellow. It will automatically terminate once everyone has voted.`;
+
 const createEstimationTerminateBlocks = ({
   blockId,
 }: {
@@ -9,7 +12,7 @@ const createEstimationTerminateBlocks = ({
     type: 'section',
     text: {
       type: 'plain_text',
-      text: `To manually terminate the estimation, click on the button bellow. It will automatically terminate once everyone has voted.`,
+      text: createEstimationTerminateText(),
     },
   },
   {

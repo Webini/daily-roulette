@@ -1,6 +1,11 @@
 import type { Block, KnownBlock } from '@slack/types';
 import { VoteOption } from './createEstimationVoteBlocks';
 
+type EstimationResultParams = {
+  name: string;
+  results: { votes: number; users: string[]; option: VoteOption }[];
+};
+
 const getSmileyForOffset = (offset: number) => {
   if (offset === 0) {
     return ':first_place_medal: ';
@@ -14,18 +19,31 @@ const getSmileyForOffset = (offset: number) => {
   return '';
 };
 
+export const createEstimationResultTitle = ({
+  name,
+}: Pick<EstimationResultParams, 'name'>) => `:bar_chart: *Results for ${name}*`;
+
+export const createEstimationResultContent = ({
+  results,
+}: Pick<EstimationResultParams, 'results'>) =>
+  results
+    .map(
+      (result, i) =>
+        `${getSmileyForOffset(i)}[*${result.option}*] ${result.users
+          .map((u) => `<@${u}>`)
+          .join(', ')}`,
+    )
+    .join('\n');
+
 const createEstimationResultBlocks = ({
   name,
   results,
-}: {
-  name: string;
-  results: { votes: number; users: string[]; option: VoteOption }[];
-}): (KnownBlock | Block)[] => [
+}: EstimationResultParams): (KnownBlock | Block)[] => [
   {
     type: 'section',
     text: {
       type: 'mrkdwn',
-      text: `:bar_chart: *Results for ${name}*`,
+      text: createEstimationResultTitle({ name }),
     },
   },
   {
@@ -35,14 +53,7 @@ const createEstimationResultBlocks = ({
     type: 'section',
     text: {
       type: 'mrkdwn',
-      text: results
-        .map(
-          (result, i) =>
-            `${getSmileyForOffset(i)}[*${result.option}*] ${result.users
-              .map((u) => `<@${u}>`)
-              .join(', ')}`,
-        )
-        .join('\n'),
+      text: createEstimationResultContent({ results }),
     },
   },
 ];

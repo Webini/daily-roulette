@@ -1,6 +1,6 @@
 import { WebClient } from '@slack/web-api';
+import axios from 'axios';
 import EventEmitter from 'events';
-import { inspect } from 'util';
 import DailyConfiguration from '../entity/dailyConfiguration';
 import createRandomString from '../utils/createRandomString';
 import shuffle from '../utils/shuffle';
@@ -8,13 +8,21 @@ import parallelPromise, { ParallelPromiseType } from '../utils/parallelPromise';
 import createEstimationVoteBlocks, {
   VoteOption,
 } from '../slack/block/createEstimationVoteBlocks';
-import createEstimationTerminateBlocks from '../slack/block/createEstimationTerminateBlocks';
-import createEstimationBlocks from '../slack/block/createEstimationBlocks';
-import createEstimationResultBlocks from '../slack/block/createEstimationResultBlocks';
+import createEstimationTerminateBlocks, {
+  createEstimationTerminateText,
+} from '../slack/block/createEstimationTerminateBlocks';
+import createEstimationBlocks, {
+  createEstimationText,
+} from '../slack/block/createEstimationBlocks';
+import createEstimationResultBlocks, {
+  createEstimationResultContent,
+  createEstimationResultTitle,
+} from '../slack/block/createEstimationResultBlocks';
 import createDebug from '../utils/createDebug';
+import wait from '../utils/wait';
 
 const debug = createDebug('estimation');
-const DEFAULT_DURATION = 10 * 60; // 10 minutes
+const DEFAULT_DURATION = 25 * 60; // 10 minutes
 
 class EstimationProcess extends EventEmitter {
   private client: WebClient;
@@ -38,6 +46,8 @@ class EstimationProcess extends EventEmitter {
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   private votes: { [key: string]: VoteOption } = {};
+
+  private ephemeralResponseUrls: { [key: string]: string } = {};
 
   constructor({
     adminId,
@@ -81,10 +91,16 @@ class EstimationProcess extends EventEmitter {
         members: this.members,
         votes: this.votes,
       }),
+      text: createEstimationText({
+        name: this.name,
+        members: this.members,
+        votes: this.votes,
+      }),
     });
     this.messageTs = res.ts || null;
 
     this.timeoutId = setTimeout(() => this.onTimeout(), this.duration * 1000);
+    await wait(500);
     await parallelPromise({
       data: this.members,
       promiseMethod: ParallelPromiseType.ALL_SETTLED,
@@ -94,11 +110,13 @@ class EstimationProcess extends EventEmitter {
           channel: this.channelId,
           blocks: createEstimationVoteBlocks({ userId, blockId: this.id }),
         });
+
         if (userId === this.adminId) {
           await this.client.chat.postEphemeral({
             user: userId,
             channel: this.channelId,
             blocks: createEstimationTerminateBlocks({ blockId: this.id }),
+            text: createEstimationTerminateText(),
           });
         }
       },
@@ -109,14 +127,20 @@ class EstimationProcess extends EventEmitter {
   }
 
   canVote(userId: string) {
-    if (!this.members.includes(userId)) {
-      return false;
-    }
-    return true;
+    return this.members.includes(userId);
   }
 
-  async vote({ userId, option }: { userId: string; option: VoteOption }) {
+  async vote({
+    userId,
+    option,
+    responseUrl,
+  }: {
+    userId: string;
+    responseUrl: string;
+    option: VoteOption;
+  }) {
     this.votes[userId] = option;
+    this.ephemeralResponseUrls[userId] = responseUrl;
     this.emit('voted', { userId, option }, this);
 
     if (Object.keys(this.votes).length === this.members.length) {
@@ -128,6 +152,11 @@ class EstimationProcess extends EventEmitter {
       channel: this.channelId,
       ts: this.messageTs!,
       blocks: createEstimationBlocks({
+        name: this.name,
+        members: this.members,
+        votes: this.votes,
+      }),
+      text: createEstimationText({
         name: this.name,
         members: this.members,
         votes: this.votes,
@@ -153,7 +182,7 @@ class EstimationProcess extends EventEmitter {
         Partial<{ [key in VoteOption]: { count: number; users: string[] } }>
       >((histo, [user, vote]) => {
         /* eslint-disable no-param-reassign */
-        if (typeof histo[vote] !== 'number') {
+        if (typeof histo[vote] === 'undefined') {
           histo[vote] = { count: 0, users: [] };
         }
         histo[vote]!.count += 1;
@@ -169,15 +198,28 @@ class EstimationProcess extends EventEmitter {
         users,
       }));
 
-    await this.client.chat.postMessage({
-      channel: this.channelId,
-      blocks: createEstimationResultBlocks({
-        name: this.name,
-        results: histogram,
-      }),
-    });
+    if (histogram.length > 0) {
+      await this.client.chat.postMessage({
+        channel: this.channelId,
+        blocks: createEstimationResultBlocks({
+          name: this.name,
+          results: histogram,
+        }),
+        text: `${createEstimationResultTitle({
+          name: this.name,
+        })}\n${createEstimationResultContent({ results: histogram })}`,
+      });
+    }
 
     this.emit('terminated', this);
+    await parallelPromise({
+      data: Object.values(this.ephemeralResponseUrls),
+      parallel: 4,
+      promiseMethod: ParallelPromiseType.ALL_SETTLED,
+      processor: async (responseUrl) =>
+        axios.post(responseUrl, { delete_original: true }),
+    });
+
     this.destruct();
     debug('Estimation %s terminated with %o', this.id, histogram);
   }

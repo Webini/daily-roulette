@@ -48,6 +48,7 @@ module.exports = {
     // '@typescript-eslint/no-use-before-define': 0,
     '@typescript-eslint/no-non-null-assertion': 0,
   },
+  ignorePatterns: ['src/migration/*.ts' ],
   overrides: [
     {
       files: ['src/entity/*.ts'],
