@@ -6,7 +6,6 @@ const remove: Middleware<SlackCommandMiddlewareArgs> = async ({
   body,
   ack,
 }) => {
-  await ack();
   const daily = await DailyConfigurationService.get({
     channelId: body.channel_id,
     enterpriseId: body.enterprise_id,
@@ -14,6 +13,7 @@ const remove: Middleware<SlackCommandMiddlewareArgs> = async ({
   });
 
   if (!daily) {
+    await ack();
     await client.chat.postMessage({
       channel: body.user_id,
       text: `Daily roulette not installed in <#${body.channel_id}>`,
@@ -21,13 +21,15 @@ const remove: Middleware<SlackCommandMiddlewareArgs> = async ({
     return;
   }
 
+  await client.conversations.leave({
+    channel: body.channel_id,
+  });
+
   await client.chat.postMessage({
     channel: body.user_id,
     text: `Daily roulette removed from <#${body.channel_id}>`,
   });
-  await client.conversations.leave({
-    channel: body.channel_id,
-  });
+  await ack();
 };
 
 export default remove;

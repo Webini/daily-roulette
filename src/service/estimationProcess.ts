@@ -191,7 +191,7 @@ class EstimationProcess extends EventEmitter {
         return histo;
       }, {}),
     )
-      .sort((a, b) => a[1].count - b[1].count)
+      .sort((a, b) => b[1].count - a[1].count)
       .map(([option, { count: votes, users }]) => ({
         option: option as VoteOption,
         votes,
